@@ -2,9 +2,18 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const room = new Schema({
-    userID: { type: String, require : true, default : ''},
+    userName: { type: String, require : true, default : 'anonymous'},
+    userJob: {type : String, required : true},
     roomID: { type : String, require : true, unique : true},
-    userCount: {type : Number, require : true, default : 1},
+    userID1: {type : String, require : true, unique : true, default : ''},
+    userID2: {type : String, require : true, unique : true, default : ''},
+    userCount: {
+        type : Number,
+        require : true,
+        default : 0, 
+        min : 0,
+        max : 2
+    }
 },
 {
     timestamps: true
