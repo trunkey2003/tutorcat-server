@@ -47,15 +47,11 @@ io.of('/room').on("connection", async (socket) => {
   socket.on("join room", (id) => {
     socket.join(id);
     socket.roomID = id;
-    socket.broadcast.to(id).emit('join room');
+    socket.broadcast.to(id).emit('someone join room', socket.id);
   })
 
   io.of("/room").adapter.on("create-room", (room) => {
     console.log(`room ${room} was created`);
-  });
-
-  socket.on("end call", (roomID) => {
-    socket.broadcast.to(roomID).emit('end call', socket.id);
   });
 
   socket.on('turn webcam off', (roomID) => {
@@ -78,8 +74,12 @@ io.of('/room').on("connection", async (socket) => {
     socket.broadcast.to(socket.roomID).emit('remote video state', state);
   })
 
+  //Khi 1 người ngắt kết nối với room sẽ xóa socket id của người đó lưu trong DB ra
+  //Nếu người đó là chủ room thì sẽ xóa phòng và thông báo cuộc gọi kết thúc
+  //Nếu người đó là người join vào thì sẽ xóa socket.id của người đó đi và giảm userCount xuống 1 đơn vị đồng thời thông báo chủ room biết có người rời đi
   socket.on('disconnect', () => {
     console.log("disconect", socket.id);
+    //Tìm room mà người vừa disconnect đó ở
     room.findOne({
       $or: [
         { userID1: socket.id },
@@ -87,28 +87,28 @@ io.of('/room').on("connection", async (socket) => {
       ]
     })
       .then((_room) => {
+        //Nếu room này đã xóa ở request khác rồi
         if (!_room) {
           return;
         }
-        if (_room.userCount <= 1) {
-          room.findOneAndDelete({
-            $or: [
-              { userID1: socket.id },
-              { userID2: socket.id }
-            ]
-          }).then(() => console.log('Delete'));
+    
+        //Nếu còn một người hoặc là chủ room là người thoát thì delete //Lúc nào cũng là chủ room vì chủ room mà thoát thì phòng cũng phải kết thức. logic <= 1 là lâu lâu bị lỗi nó xóa luôn
+        if (_room.userCount <= 1 || _room.userID1 == socket.id) {
+          room.findOneAndDelete({roomID : _room.roomID}).then(() => socket.broadcast.to(_room.roomID).emit('end call'));
         } else {
+          //nếu không phải chủ room
           room.findOneAndUpdate({
-            $or: [
-              { userID1: socket.id },
-              { userID2: socket.id }
-            ]
+            roomID : _room.roomID
           }, { $inc: { userCount: -1 }, $set : {userID2 : ''} })
             .then(() => {
-              console.log('leave room');
+              console.log(socket.id + ' leave room');
             })
             .catch((err) => {
               console.log(err);
+            })
+            .finally(() =>{
+              //thông báo chủ room biết có người vừa thoát
+              socket.broadcast.to(_room.roomID).emit('someone leave call');
             })
         }
       })
