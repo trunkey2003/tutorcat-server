@@ -60,7 +60,7 @@ io.of('/room').on("connection", async (socket) => {
 
   socket.on('turn webcam on', (roomID) => {
     socket.broadcast.to(roomID).emit('remote turn webcam on');
-  })
+  });
 
   socket.on('start share screen', (roomID) => {
     socket.broadcast.to(roomID).emit('remote start share screen');
@@ -68,10 +68,10 @@ io.of('/room').on("connection", async (socket) => {
 
   socket.on('stop share screen', (roomID) => {
     socket.broadcast.to(roomID).emit('remote stop share screen');
-  })
+  });
 
-  socket.on('my video state', (state) => {
-    socket.broadcast.to(socket.roomID).emit('remote video state', state);
+  socket.on("me chat", ({content, roomID}) =>{
+    socket.broadcast.to(roomID).emit('someone chat', content);
   })
 
   //Khi 1 người ngắt kết nối với room sẽ xóa socket id của người đó lưu trong DB ra
