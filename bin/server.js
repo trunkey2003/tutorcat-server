@@ -48,7 +48,8 @@ io.of('/room').on("connection", async (socket) => {
     socket.join(id);
     socket.roomID = id;
     socket.broadcast.to(id).emit('someone join room', socket.id);
-  })
+    socket.broadcast.to(id).emit('new chat break', socket.id + ' joined room');
+  });
 
   io.of("/room").adapter.on("create-room", (room) => {
     console.log(`room ${room} was created`);
@@ -72,7 +73,11 @@ io.of('/room').on("connection", async (socket) => {
 
   socket.on("me chat", ({content, roomID}) =>{
     socket.broadcast.to(roomID).emit('someone chat', content);
-  })
+  });
+
+  socket.on("new chat break", ({content, roomID}) =>{
+    socket.broadcast.to(roomID).emit("new chat break", content);
+  });
 
   //Khi 1 người ngắt kết nối với room sẽ xóa socket id của người đó lưu trong DB ra
   //Nếu người đó là chủ room thì sẽ xóa phòng và thông báo cuộc gọi kết thúc
@@ -96,6 +101,7 @@ io.of('/room').on("connection", async (socket) => {
         if (_room.userCount <= 1 || _room.userID1 == socket.id) {
           room.findOneAndDelete({roomID : _room.roomID}).then(() => socket.broadcast.to(_room.roomID).emit('end call'));
         } else {
+          const userID2 = _room.userID2;
           //nếu không phải chủ room
           room.findOneAndUpdate({
             roomID : _room.roomID
@@ -109,6 +115,7 @@ io.of('/room').on("connection", async (socket) => {
             .finally(() =>{
               //thông báo chủ room biết có người vừa thoát
               socket.broadcast.to(_room.roomID).emit('someone leave call');
+              socket.broadcast.to(_room.roomID).emit('new chat break', userID2 + ' left room');
             })
         }
       })
