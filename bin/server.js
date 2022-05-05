@@ -83,12 +83,12 @@ io.of('/room').on("connection", async (socket) => {
   //Nếu người đó là chủ room thì sẽ xóa phòng và thông báo cuộc gọi kết thúc
   //Nếu người đó là người join vào thì sẽ xóa socket.id của người đó đi và giảm userCount xuống 1 đơn vị đồng thời thông báo chủ room biết có người rời đi
   socket.on('disconnect', () => {
-    console.log("disconect", socket.id);
     //Tìm room mà người vừa disconnect đó ở
+    // room.findOneAndDelete({userCount : 0}); //khỏi đợi
     room.findOne({
       $or: [
         { userID1: socket.id },
-        { userID2: socket.id }
+        { userID2: socket.id },
       ]
     })
       .then((_room) => {
