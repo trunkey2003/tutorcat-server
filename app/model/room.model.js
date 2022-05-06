@@ -4,6 +4,9 @@ const Schema = mongoose.Schema;
 const room = new Schema({
     userJob: {type : String, required : true},
     roomID: { type : String, require : true, unique : true},
+    title: {type : String},
+    language: {type : String},
+    programmingLanguages : {type: [String]},
     userName1: { type: String, require : true, default : 'anonymous'},
     userName2: { type: String},
     userID1: {type : String, require : true, unique : true, default : ''},
