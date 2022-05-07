@@ -47,7 +47,7 @@ io.of('/room').on("connection", async (socket) => {
   socket.on("join room", (id) => {
     socket.join(id);
     socket.roomID = id;
-    socket.broadcast.to(id).emit('someone join room', socket.id);
+    socket.broadcast.to(id).emit('remote join room', socket.id);
     socket.broadcast.to(id).emit('new chat break', socket.id + ' joined room');
   });
 
@@ -56,23 +56,27 @@ io.of('/room').on("connection", async (socket) => {
   });
 
   socket.on('turn webcam off', (roomID) => {
-    socket.broadcast.to(roomID).emit('remote turn webcam off');
+    socket.broadcast.to(roomID).emit('remote turned webcam off');
   });
 
   socket.on('turn webcam on', (roomID) => {
-    socket.broadcast.to(roomID).emit('remote turn webcam on');
+    socket.broadcast.to(roomID).emit('remote turned webcam on');
   });
 
   socket.on('start share screen', (roomID) => {
-    socket.broadcast.to(roomID).emit('remote start share screen');
+    socket.broadcast.to(roomID).emit('remote started share screen');
   });
 
   socket.on('stop share screen', (roomID) => {
-    socket.broadcast.to(roomID).emit('remote stop share screen');
+    socket.broadcast.to(roomID).emit('remote stoped share screen');
   });
 
   socket.on("me chat", ({content, roomID}) =>{
-    socket.broadcast.to(roomID).emit('someone chat', content);
+    socket.broadcast.to(roomID).emit('remote chatted', content);
+  });
+
+  socket.on("me send code", ({content, roomID}) =>{
+    socket.broadcast.to(roomID).emit('remote sent code', content);
   });
 
   socket.on("new chat break", ({content, roomID}) =>{
@@ -114,7 +118,7 @@ io.of('/room').on("connection", async (socket) => {
             })
             .finally(() =>{
               //thông báo chủ room biết có người vừa thoát
-              socket.broadcast.to(_room.roomID).emit('someone leave call');
+              socket.broadcast.to(_room.roomID).emit('remote leave call');
               socket.broadcast.to(_room.roomID).emit('new chat break', userID2 + ' left room');
             })
         }

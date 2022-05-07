@@ -5,7 +5,7 @@ const accessToken = process.env.API_COMPILER_TOKEN;
 
 class CompillerController {
   createSubmission(req, res, next) {
-    const {source, input, language} = req.body;
+    var {source, input, language} = req.body;
     var compilerId;
 
     if (source == "") {
@@ -18,13 +18,13 @@ class CompillerController {
           compilerId = 44;
           break;
         case "javascript":
-          compilerId = 35;
+          compilerId = 112;
           break;
         case "python":
           compilerId = 116;
           break;
         case "csharp":
-          compilerId = 86;
+          compilerId = 27;
           break;
         case "java":
           compilerId = 10
@@ -33,6 +33,13 @@ class CompillerController {
           compilerId = -1;
           // code block
     };
+
+    //Do đối tượng console không tốn tại trong Rhino nên sẽ sửa thì xíu ở chỗ này cho dễ sử dụng
+    if (source.includes('console.log')){
+      source = source.replace('console.log', 'print');
+      res.locals.warning = "Current JS compiler doesn't have console object. Therefore, we replace console.log with print";
+    }
+
 
     if (compilerId == -1){
       res.status(403);
@@ -134,7 +141,7 @@ class CompillerController {
               if (body.result.streams.error){
                 const status = body.result.status;
                 const {data} = await axios.get(body.result.streams.error.uri);
-                res.status(202).send({status, error : data});
+                res.status(202).send({status, error : data, warning : res.locals.warning});
                 return;
               }
 
@@ -142,11 +149,15 @@ class CompillerController {
               if (body.result.streams.output){
                 const status = body.result.status;
                 const {data} = await axios.get(body.result.streams.output.uri);
-                res.status(200).send({status, output: data});
+                const time = body.result.time;
+                const memory = body.result.memory;
+                res.status(200).send({status, output: data, time, memory, warning : res.locals.warning});
                 return;
               }
-
-              res.send(body);
+              else {
+                const status = body.result.status;
+                res.status(202).send({status, error : status.name});
+              }
             }
           }
 
