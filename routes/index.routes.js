@@ -18,7 +18,7 @@ router.delete('/api/room/delete/:roomID', roomController.deleteRoom)
 router.delete('/api/room/delete-if-empty/:roomID', roomController.deleteRoomIfEmpty);
 router.put('/api/room/join/:roomID/:userID', roomController.increaseUserCount);
 router.put('/api/room/leave/:roomID/:userID', roomController.decreaseUserCount);
-router.get('/api/room/get', roomController.getAllRooms);
+router.get('/api/room/get', roomController.getAllAvailableRooms);
 
 
 //compiler

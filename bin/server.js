@@ -42,6 +42,7 @@ io.of('/room').on("connection", async (socket) => {
   socket.on("create room", (id) => {
     socket.join(id);
     socket.roomID = id;
+    io.of('/live').emit("update room");
   })
 
   socket.on("join room", (id) => {
@@ -49,6 +50,7 @@ io.of('/room').on("connection", async (socket) => {
     socket.roomID = id;
     socket.broadcast.to(id).emit('remote join room', socket.id);
     socket.broadcast.to(id).emit('new chat break', socket.id + ' joined room');
+    io.of('/live').emit("update room");
   });
 
   io.of("/room").adapter.on("create-room", (room) => {
@@ -63,12 +65,20 @@ io.of('/room').on("connection", async (socket) => {
     socket.broadcast.to(roomID).emit('remote turned webcam on');
   });
 
-  socket.on('start share screen', (roomID) => {
-    socket.broadcast.to(roomID).emit('remote started share screen');
+  socket.on('start sharing screen', (roomID) => {
+    socket.broadcast.to(roomID).emit('remote started sharing screen');
   });
 
-  socket.on('stop share screen', (roomID) => {
-    socket.broadcast.to(roomID).emit('remote stoped share screen');
+  socket.on('stop sharing screen', (roomID) => {
+    socket.broadcast.to(roomID).emit('remote stoped sharing screen');
+  });
+
+  socket.on('start sharing audio', (roomID) =>{
+    socket.broadcast.to(roomID).emit('remote started sharing audio');
+  });
+
+  socket.on('stop sharing audio', (roomID) =>{
+    socket.broadcast.to(roomID).emit('remote stoped sharing audio');
   });
 
   socket.on("me chat", ({content, roomID}) =>{
@@ -103,7 +113,7 @@ io.of('/room').on("connection", async (socket) => {
     
         //Nếu còn một người hoặc là chủ room là người thoát thì delete //Lúc nào cũng là chủ room vì chủ room mà thoát thì phòng cũng phải kết thức. logic <= 1 là lâu lâu bị lỗi nó xóa luôn
         if (_room.userCount <= 1 || _room.userID1 == socket.id) {
-          room.findOneAndDelete({roomID : _room.roomID}).then(() => socket.broadcast.to(_room.roomID).emit('end call'));
+          room.findOneAndDelete({roomID : _room.roomID}).then(() => {socket.broadcast.to(_room.roomID).emit('end call'); io.of('/live').emit("update room");});
         } else {
           const userID2 = _room.userID2;
           //nếu không phải chủ room
@@ -118,6 +128,7 @@ io.of('/room').on("connection", async (socket) => {
             })
             .finally(() =>{
               //thông báo chủ room biết có người vừa thoát
+              io.of('/live').emit("update room");
               socket.broadcast.to(_room.roomID).emit('remote leave call');
               socket.broadcast.to(_room.roomID).emit('new chat break', userID2 + ' left room');
             })

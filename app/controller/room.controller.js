@@ -13,9 +13,9 @@ class RoomController {
       .catch(() => res.status(500).send({ message: "Cannot get rooms" }));
   }
 
-  getAllRooms(req, res) {
+  getAllAvailableRooms(req, res) {
     room
-      .find({})
+      .find({ userCount : {$gt : 0}})
       .then((room) => {
         res.status(200).send(room);
       })
@@ -29,7 +29,8 @@ class RoomController {
       .then(() => {
         res.status(200).send({ message: "created" });
       })
-      .catch(() => {
+      .catch((err) => {
+        console.log(err);
         res.status(503).send({ message: "fail create room" });
       });
   }
